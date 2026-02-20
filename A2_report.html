@@ -1,0 +1,261 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<title>Vis & Society Assignment 2</title>
+	<link rel="stylesheet" href="https://vis-society.github.io/assignments/report.css" />
+</head>
+
+<body>
+	<header>
+		<h1>
+			<small>Assignment 2</small>
+			Exploratory Data Analysis
+		</h1>
+
+		<p>
+			<strong>Michelle Mo</strong> - <em>michmo@mit.edu</em>
+		</p>
+	</header>
+	<main>
+		<section>
+			<h2>Subtheme: Zoning and Housing Supply</h2>
+
+			<h3>Overall Analysis Questions</h3>
+			<ol>
+				<li>How does single-family zoning policy correlate with the presence of the student/young professional demographic, and where are the "tension points" where restrictive zoning may be forcing students and young professionals into precarious or "illegal" housing situations?</li>
+				<p>
+				This question is motivated by observing the housing struggles of friends moving out of campus housing who are forced into a narrow set of neighborhoods (like Somerville) to find suitable lifestyle accommodations.
+				Recently, I discovered four separate friends -- without planning or coordination -- are living within two blocks of each other in Somerville. I wanted to understand if this was a coincidence, or if there was a larger pattern of clustering.
+				The background reading <strong>"The Illegal City of Somerville"</strong> highlights that much of the dense housing these friends rely on would be illegal to build today due to modern zoning. 
+				I want to identify where this population is clustered and see if the "legal" zoning in those areas actually matches their density needs, or if we are relying on a "hidden" or "illegal" stock of housing to support our workforce and students.
+				</p>
+				<li>To what extent does "Exclusively Single-Family" zoning act as a legal "income floor" for residents, and is there a statistically significant correlation between these zones and the concentration of high-income households (>$200k) compared to "Other" housing zones?</li>
+				<p>
+					The <strong>"Exclusionary by Design"</strong> report argues that zoning has historically been used as a tool for class and race exclusion. 
+					I want to investigate if neighborhoods with exclusively single-family zoning effectively mandate a high price of entry. 
+					By analyzing the income buckets (from the 2014-2018 ACS data), I can determine if single-family zoning serves as a primary driver of economic segregation in the Greater Boston area.
+					My hypothesis is that there will be a correlation, but I'm not sure how strong it will be, especially if there are other factors at play that make it difficult to isolate the effect of income alone given the diversity of Boston's municipalities.
+				</p>
+				
+				<li>What is the quantitative potential of the new state-wide Accessory Dwelling Unit (ADU) mandate within exclusively single-family municipalities (like Newton or Quincy), and can a modest 5% adoption rate contribute meaningfully to the Affordable Homes Act's goal of 200,000 new units by 2030?</li>
+				<p>
+					This question stems from the <strong>"Living Little"</strong> report and the recently passed <strong>"Affordable Homes Act,"</strong> which emphasize the need for 200,000 new housing units. Large-scale developments often face "NIMBY" pushback, but the ADU mandate offers an incremental, "hidden" form of density. 
+					I am curious if these small-scale changes to existing "Only Single Family" residential lots actually have the spatial capacity to make a dent in a massive statewide goal. 
+				</p>
+				
+				<h4> Other Questions</h4>
+
+				<p>
+					Beyond these three main questions, I was inspired by the background readings to inquire further about the following:
+					<li>Following the methodology used in the <strong>"The Illegal City of Somerville"</strong> report, it would be interesting to apply the same parcel-level "illegal building" methodology to other Boston municipalities to see which regions are most/least compliant with their own zoning laws. 
+						Are there any shared patterns or features among these municipalities? Is there a demographic or economic profile that predicts compliance or non-compliance?</li>
+
+						<p>
+							I suspect that "legal" neighborhoods (those that comply with current zoning) might be newer, more expensive, or more exclusionary, whereas "illegal" neighborhoods (like the dense parts of Somerville or Cambridge) provide the diversity of housing types that lower-income residents and students rely on. I want to see if the buildings that are "allowed" by current law are actually the ones that are the least affordable or accessible to the current population.
+							This investigation requires a more granular analysis of the zoning laws in each municipality, which is beyond the scope of this specific exploratory analysis.
+						</p>
+					<li>
+						How does the "market gap" manifest in Boston's housing market, given the zoning supply? What are people actually searching for on platforms like Zillow compared to what is legally allowed to be built?
+					</li>
+						<p>
+							Comparing "Sold" transactions (actual supply) against "Saved" listings or search queries (demand) would reveal the true popularity of the housing types currently restricted by zoning.
+							This could be a useful way of understanding the housing market from both the supply and demand sides, and could be used to inform policy decisions about zoning. I would also like to explore the temporal shift as the market changes over time, as well as observe the impacts (if any) of evolving zoning legislation.
+							The data for this investigation would need to be collected from Zillow, which is beyond the scope of this specific exploratory analysis.
+						</p>
+					
+				
+			</ol>
+		</section>
+
+		<section>
+			<h2>Discoveries & Insights</h2>
+
+			<h3>
+				Dataset Exploration
+			</h3>
+
+			<p>
+				The main dataset analyzed in this exploration is <code>housing_sf_other_w_census.csv</code>. We can read the metadata in <code>Metadata_housing_sf_other_w_census.txt</code> to get a better understanding of what it contains:
+				
+				<aside style="border-left: 4px solid #4a90e2; padding-left: 16px; margin: 1em 0; background: #f7fafd;">
+					<strong>Description:</strong> This dataset was created from MAPC's Zoning Atlas. It consists of spatial data and associated tabular data for the single-family and other types of housing in zoning districts of the 101 municipalities in the MAPC region. This dataset only keeps housing zones in Metro Boston and combines zones according to whether it is only single-family zoning by municipalities. Besides, this data aggregates the race and income data extracted from census data. There are two rows for some municipalities in this dataset to indicate only single-family zoning and other housing zoning.
+				</aside>
+
+				Before diving into the spatial analysis, I performed a thorough profiling of the individual fields within the dataset.
+
+				<h4>1. Municipal Structure & Boolean Flags</h4>
+				<p>
+					The dataset contains 153 Muni IDs representing 101 distinct municipalities. My initial row count revealed that 52 municipalities appear twice, meaning they contain both "Only Single-Family" zoning and "Other" housing zones. This structural choice allows for a direct comparison of restrictive versus permissive zoning within the same town. To improve data clarity, I converted the "Only Single Family" and "MBTA Community" flags into boolean variables. Additionally, I noted that the "Is Housing" column was redundant, as the dataset is pre-filtered for residential land use.
+				</p>
+
+				<h4>2. Single Family Zoning</h4>
+				<p>
+					The <code>% Single Family</code> field represents the percentage of how much of residential land in that municipality is zoned exclusively for single-family homes. The values are equal to: <code>(the land area of a single family for that municipality)/(land area of the housing zoning for that municipality)</code>.
+					This field is useful for understanding the zoning policies of each municipality. 
+
+					<figure>
+						<img src="a2_pngs/perSF_muni_distr.png" alt="" style="max-width: 65%; height: auto;" />
+						<figcaption>
+						Distribution of % Single Family zoning by municipality. Almost half of the municipalities have little or no restrictive single-family zoning. 
+						Among the municipalities with some single-family zoning, the distribution is skewed towards the higher end of the spectrum, with 7 municipalities having 100% single-family zoning.
+					</figure>
+
+				</p>
+
+				<h4>2. The Population Sample Paradox</h4>
+				<p>
+					A critical observation occurred when reviewing total population counts: high-density cities like Boston showed a population of only ~1,000 residents. 
+					This dataset provides a <em>zoning-based sample</em> rather than a full census. The captured population represents only those living in purely residential zones. Residents in "Complex Zones" (Mixed-Use or Special Districts) are excluded, meaning our findings reflect the demographics of the region's <em>purely residential footprint</em> rather than the entire urban fabric.
+				</p>
+
+				<h4>3. Investigating the Temporal Gap (2010 vs. 2018)</h4>
+				<p>
+					The dataset merges 2010 Census household types (fhh/nfhh) with 2014-2018 ACS income data. I investigated whether these totals added up correctly and discovered a significant temporal gap. 
+					
+					The total household count in 2010 is given by the sum of the <code>fhh</code> and <code>nfhh</code> fields. The total household count in 2018 is given by the <code>Hh</code> field. We can compute the difference between the two as <code>Hh - (fhh + nfhh)</code>, creating a new <code>Household Temporal Difference</code> field.
+
+					<figure>
+						<img src="a2_pngs/muni_Hhtempdiff.png" alt="" style="max-width: 100%; height: auto;" />
+						<figcaption>
+						Household Temporal Difference between 2010 and 2018 by municipality. Most municipalities saw household increases, though Boston's residential-only sample decreased, suggesting suburban sprawl (although the low number of households in 2018 suggests that this may be due to the survey methodology; see previous section).
+						</figcaption>
+					</figure>
+					<figure>
+						<img src="a2_pngs/muni_zoningtype_2010-18Hhchange.png" alt="" style="max-width: 100%; height: auto;" />
+						<figcaption>
+						Change in household counts between 2010 and 2018 by zoning type. Growth was heavily concentrated in non-single-family housing. Some towns that initially did not have "Other" housing zoning saw significant growth in that category (e.g. Framingham). 
+						There are examples of mixed changes based on zoning type (e.g. Wellesley, which gained "Other" housing households but actually lost single-family ones). Several zones reported zero population for certain zoning types. These represent new developments or transitional areas where zoning policies will shape the growth of the next decade.
+						</figcaption>
+					</figure>
+
+					These figures show that there has been a significant change in household counts between 2010 and 2018, and highlights the nuances of using aggregated data from multiple sources. If we do a quick sanity check by comparing household to population counts, we should expect to see a positive linear correlation between the two. However, this is not the case for the 2018 household count:
+
+					<figure>
+						<img src="a2_pngs/pop_to_hh_correlation.png" alt="" style="max-width: 35%; height: auto;" />
+						<figcaption>
+						Correlation between population and household counts. When using the <code>Hh</code> field (2018 household count), there is no clear linear correlation. However, the computed 2010 household count (from the <code>fhh</code> and <code>nfhh</code> fields) has a strong positive correlation with the population count. This is because the population count was taken from the 2010 Census. 
+						</figcaption>
+					</figure>
+
+					Thus, we should be careful when using the <code>Hh</code> field (2018 household count) to make inferences about the population, and vice versa.
+				</p>
+
+			<h3>
+				Question 1: How does single-family zoning policy correlate with the presence of the student/young professional demographic, and where are the "tension points" where restrictive zoning may be forcing students and young professionals into precarious or "illegal" housing situations?
+			</h3>
+
+				<p>
+				To approximate the population of students and young professionals, I developed a <strong>Roommate Lifestyle Index</strong>. 
+				This metric isolates residents aged 18-64 living in Non-Family Households (NFHH)s, which are proxy characteristics for this "Roommate Lifestyle" demographic. 
+				By filtering the data to the municipalities with "Other" housing zoning, I investigated how zoning policy dictates where this demographic is allowed to exist.
+				</p>
+
+				<figure>
+					<img src="a2_pngs/roommate_density3.png" alt=""  style="max-width: 85%; height: auto;" />
+					<figcaption>
+					We map the density of "Roommate Lifestyle" residents in the 52 "Mixed" municipalities. Roommate Density is calculated by dividing the Roommate Lifestyle Index by land available for non-single-family housing.
+					</figcaption>
+				</figure>
+
+				<p>
+				My initial hypothesis was that the municipalities with the most restrictive single-family zoning would have the highest roommate density, where the roommate population is squeezed into a small area. 
+				By contrast, I predicted that the municipalities with the most permissive single-family zoning would have the lowest roommate density, since there would be more land available for non-single-family housing.
+				</p>
+				Indeed, the results show that roommate density is highest in municipalities that have >90% single-family zoning. Notably, there is a spike in Sherborn, which has over 16x the density of the next highest municipality.
+				Why is this the case? Looking back at the data, Sherborn has a total of 17 family households and 44 non-family households, with a high roommate lifestyle index of 0.25 and only 0.1315% of land available for non-single-family housing.
+				These small numbers exaggerate the roommate density, as the denominator is so small. Intuitively, if Sherborn has zoned 99.86% of its land for single-family housing only, but has over 2.5x non-family households over family households, the density of roommates living in non-single-family housing would be quite high.
+				However, the degree to which it is higher than other municipalities seems to be a function of its relative size. Thus, we need to be careful when interpreting the roommate density in Sherborn, and other municipalities with similar small numbers.
+				</p>
+				Overall, the results show that cities with more restrictive single-family zoning have more roommate density in their non-single-family housing zones. For the demographic of students and young professionals,
+				this manifests in a competitive housing market for non-single-family housing. This may lead to them finding housing in overcrowded units, unpermitted basement suites, or informal living arrangements that bypass official zoning. 
+				When the legal "Other" housing supply is restricted to a fraction of a percent (as in the Sherborn example), the mismatch between the demographic reality and the legal code creates a regional pressure cooker, forcing the "Roommate" population into precarious or technically illegal housing situations.
+
+				</p>
+
+			<h3>
+				Question 2: To what extent does "Exclusively Single-Family" zoning act as a legal "income floor" for residents, and is there a statistically significant correlation between these zones and the concentration of high-income households (>$200k) compared to "Other" housing zones?
+			</h3>
+
+			<p>
+				To investigate this question, I analyzed the income data for the municipalities with "Other" housing zoning. I computed the percentage of households with income greater than $200,000 for each municipality, and compared it to the percentage of households with income greater than $200,000 for the municipalities with "Only Single-Family" zoning.
+
+				<figure>
+					<img src="a2_pngs/Regional Wealth Trend.png" alt="" style="max-width: 15%; height: auto;" />
+					<figcaption>
+					Wealth trend by housing zoning type. Single-family zoning has a higher concentration of high-income households compared to "Other" housing zones.
+					</figcaption>
+				</figure>
+
+				Within the same municipality, how does the income distribution compare between single-family and other housing zones? Does the restrictiveness of single-family zoning lead to a higher difference in income between the two zoning types?
+
+				<figure>
+					<img src="a2_pngs/finding the wealth wall.png" alt="" style="max-width: 85%; height: auto;" />
+					<figcaption>
+					We plot the difference in income between single-family and other housing zones for each municipality. For most municipalities, the difference is positive, indicating that single-family zoning has a higher concentration of high-income households compared to "Other" housing zones.
+					However, this is not always the case, and is much less correlated than hypothesized. This "spaghetti" effect suggests that in certain high-demand suburbs, even the "Other" housing zones (multi-family) have become gentrified or represent luxury developments.
+					</figcaption>
+				</figure>
+
+				While individual municipalities may not have a strong correlation between single-family zoning and high-income households, the regional trend suggests that single-family zoning is a legal "income floor" for residents.
+				This is consistent with the findings of the <strong>"Exclusionary by Design"</strong> report, which argues that zoning has historically been used as a tool for class and race exclusion.
+			</p>
+
+			<h3>
+				Question 3: What is the quantitative potential of the new state-wide Accessory Dwelling Unit (ADU) mandate within exclusively single-family municipalities (like Newton or Quincy), and can a modest 5% adoption rate contribute meaningfully to the Affordable Homes Act's goal of 200,000 new units by 2030?
+			</h3>
+			<p>
+				Notably, I proposed this research question before realizing the data was gathered from 2010-2018. Since then, the population and household counts have changed significantly, so any quantitative analysis would need to be updated to reflect the current data.
+				However, we can still make some observations about the potential of ADUs assuming 2018 household counts. 
+
+				We can approximate the number of ADUs that could be built in each municipality by taking 5% of the total households in that municipality multiplied by the single-family zoning percentage.
+
+				<figure>
+					<img src="a2_pngs/Sheet 14.png" alt="" style="max-width: 95%; height: auto;"/>
+					<figcaption>
+					Potential ADU count by municipality. This chart estimates new housing 
+					units by applying a 5% adoption rate to households currently in "Single-Family Only" 
+					zones, weighted by the town's land-use policy. In total, from the original 2018 household count of 116,355, we estimate that 2,880 new housing units could be built. 
+					</figcaption>
+				</figure>
+
+				By constructing ADUs only 5% of existing single-family zoning, we can build 2,880 new housing units. This is a modest contribution to the Affordable Homes Act's goal of 200,000 new units by 2030.
+				However, we need to consider that the baseline of 2018 household counts is not representative of the current population and household counts, and that the 5% adoption rate is a conservative estimate.
+				Building ADUs could help alleviate the housing shortage in these municipalities, providing a desirable and legal housing option for groups that are currently under high pressure from restrictive zoning policies (e.g. students and young professionals).
+				This represents a realistic "middle path" for regional density that requires no new land acquisition or aggressive upzoning. 
+			</p>
+
+		</section>
+
+		<section>
+			<h2>Summary</h2>
+
+			<p>
+				This investigation into the housing supply and zoning policies in Metro Boston reveals that the current housing crisis is not merely a product of market demand, but a deliberate outcome of spatial policy. Through exploratory data analysis of the MAPC Zoning Atlas and Census records, a few core lessons emerge:
+			</p>
+		
+			<ul>
+				<li>
+					<strong>Density is policy-driven, not just demographic:</strong> The "Roommate Squeeze" seen in towns with high single-family zoning shows that hyper-density often occurs not because a population chooses it, but because zoning mandates a "sliver" of available land for multi-family use. When we restrict land to 99% single-family use, we create artificial tension points that force the certain demographics, such as students and the workforce, into precarious housing situations.
+				</li>
+				<li>
+					<strong>Zoning acts as a structural wealth wall:</strong> As an overall trend, single-family zoning serves as an effective economic filter. By legalizing only the most expensive form of housing (single-detached homes) on the majority of regional land, municipalities maintain high "prices of entry," successfully separating the wealthiest residents from the broader regional workforce. Although this pattern occurs on an overall level, it is not uniform across all municipalities.
+				</li>
+				<li>
+					<strong>The value of strategic incrementalism:</strong> While the potential for 2,880 ADU units may seem modest compared to state goals, these units are strategically significant. They represent a form of gentle upzoning, providing legal pathways for diversity in the region's most exclusive suburbs.
+				</li>
+				<li>
+					<strong>Data literacy requires context:</strong> Finally, this analysis highlights the importance of data provenance. Understanding the "Boston Discrepancy" (zoning-based sampling vs. full census) and the temporal gaps between 2010 and 2018 data was essential to avoid misleading conclusions about regional growth and density.
+				</li>
+			</ul>
+		
+		</section>
+
+	<section>
+		<h2>Acknowledgments</h2>
+		<p>
+			This report was written using the Cursor IDE, which provided HTML assistance. Tableau debugging assistance was provided by Gemini 3.
+		</p>
+	</section>
+	</main>
+</body>
+</html>
